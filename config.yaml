@@ -33,5 +33,8 @@ wechat:
   # 用户关注时主动发送的消息
   subscribeMsg: 你好，我是基于ChatGPT的AI助手，有什么能帮助您的吗？
 
+  AppSecret: xxx
+  AppID: xxx
+  AESKey: xxx
 
 
