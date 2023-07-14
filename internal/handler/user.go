@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
+	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
@@ -172,28 +174,33 @@ func decodeWX(r *http.Request) ([]byte, bool) {
 	var reqMsg RequestMessage
 	if err := xml.Unmarshal(requestBody, &reqMsg); err != nil {
 		// 处理解析错误
-		log.Printf("decodeWX 处理解析错误")
+		log.Printf("decodeWX 处理解析错误 %s", err)
 		return nil, true
 	}
 
-	encryptedMsg := []byte(reqMsg.EncryptedMsg)
+	encryptedMsg := reqMsg.EncryptedMsg
 
 	// 根据自己的实际情况获取AES密钥
 	aesKey := GetAESKeyFromConfig()
 
 	// 解密加密内容
-	encryptedMsg, err = AESDecrypt(encryptedMsg, aesKey)
+
+	// 解密消息
+	decodeString, err := base64.StdEncoding.DecodeString(encryptedMsg)
+	decryptedData, _ := aesDecryptCbc(decodeString, aesKey)
+	fmt.Println("Decrypted data:", decryptedData)
+
 	if err != nil {
 		// 处理解密错误
-		log.Printf("decodeWX AESDecrypt err")
+		log.Printf("decodeWX AESDecrypt err %s", err)
 		return nil, true
 	}
-	return encryptedMsg, false
+	return decryptedData, false
 }
 
 func encodeWx(replyMsg []byte) ([]byte, bool) {
 	// 使用AES加密回复消息
-	encryptedReplyMsg, err := AESEncrypt(replyMsg, GetAESKeyFromConfig())
+	encryptedReplyMsg, err := aesEncryptCbc(replyMsg, GetAESKeyFromConfig())
 	if err != nil {
 		// 处理加密错误
 		log.Printf("encodeWx AESEncrypt err")
@@ -201,7 +208,7 @@ func encodeWx(replyMsg []byte) ([]byte, bool) {
 	}
 
 	// 构建回复XML数据
-	responseXML := fmt.Sprintf(`<xml><Encrypt><![CDATA[%s]]></Encrypt></xml>`, encryptedReplyMsg)
+	responseXML := fmt.Sprintf(`<xml><Encrypt><![CDATA[%s]]></Encrypt></xml>`, base64.StdEncoding.EncodeToString(encryptedReplyMsg))
 
 	// 发送回复消息给微信公众号服务器
 	ret := []byte(responseXML)
@@ -216,31 +223,52 @@ func GetAESKeyFromConfig() []byte {
 	return []byte(config.Wechat.AESKey)
 }
 
-func AESDecrypt(ciphertext, key []byte) ([]byte, error) {
+// 使用 CBC 模式进行解密
+func aesDecryptCbc(ciphertext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
 	iv := make([]byte, aes.BlockSize)
-	stream := cipher.NewCTR(block, iv)
+	mode := cipher.NewCBCDecrypter(block, iv)
 
 	plaintext := make([]byte, len(ciphertext))
-	stream.XORKeyStream(plaintext, ciphertext)
+	mode.CryptBlocks(plaintext, ciphertext)
+
+	// 去除填充
+	padding := plaintext[len(plaintext)-1]
+	if padding < 1 || padding > aes.BlockSize {
+		return nil, fmt.Errorf("Invalid padding")
+	}
+	plaintext = plaintext[:len(plaintext)-int(padding)]
 
 	return plaintext, nil
 }
 
-func AESEncrypt(plaintext, key []byte) ([]byte, error) {
+// 使用 CBC 模式进行加密
+func aesEncryptCbc(plaintext, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
 	}
 
+	blockSize := block.BlockSize()
+	plaintext = pkcs7Padding(plaintext, blockSize)
+
+	iv := make([]byte, blockSize)
+
+	mode := cipher.NewCBCEncrypter(block, iv)
+
 	ciphertext := make([]byte, len(plaintext))
-	iv := make([]byte, aes.BlockSize)
-	stream := cipher.NewCTR(block, iv)
-	stream.XORKeyStream(ciphertext, plaintext)
+	mode.CryptBlocks(ciphertext, plaintext)
 
 	return ciphertext, nil
+}
+
+// PKCS7 填充
+func pkcs7Padding(data []byte, blockSize int) []byte {
+	padding := blockSize - (len(data) % blockSize)
+	padText := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(data, padText...)
 }
