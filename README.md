@@ -1,6 +1,15 @@
 ### 基于GPT-3.5的公众号自动回复机器人
 ### 持续优化中，喜欢的同学给个🌟关注一下
+### 代码build
+ndk16
 
+``
+CGO_ENABLED=1 \
+CC=$ANDROID_NDK_HOME/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/bin/arm-linux-androideabi-gcc
+GOOS=linux \
+GOARCH=amd64 \
+go build -o openaiBin
+``
 ### 一、介绍
 - 说明
   - 这是一个用于**公众号自动回复机器人**的项目。需要你有 OpenAI 账号、公众号、海外服务器或代理。
