@@ -33,6 +33,10 @@ var (
 		Token        string
 		Timeout      int
 		SubscribeMsg string
+
+		AppSecret string
+		AppID     string
+		AESKey    string //= "your_encoding_aes_key"   // 你的EncodingAESKey
 	}
 	// User struct {
 	// 	QueryTimesDaily int64

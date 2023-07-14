@@ -3,6 +3,7 @@ module openai
 go 1.18
 
 require (
+	github.com/chanxuehong/wechat v0.0.0-20230222024006-36f0325263cd
 	github.com/spf13/viper v1.15.0
 	github.com/tomatocuke/sieve v0.0.0-20230214050111-c2a0441edcdf
 )
