@@ -62,7 +62,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	log.Printf("ReceiveMsg user: %s", msg.FromUserName)
+	log.Printf("ReceiveMsg user: %s %s", msg.FromUserName, msg.MsgType)
 
 	// 非文本不回复(返回success表示不回复)
 	switch msg.MsgType {
