@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
-	"github.com/CharLemAznable/wechataes"
-	_ "github.com/CharLemAznable/wechataes"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +11,7 @@ import (
 	"openai/internal/service/fiter"
 	"openai/internal/service/openai"
 	"openai/internal/service/wechat"
+	"openai/internal/wechataes"
 	"sync"
 	"time"
 )
@@ -215,8 +214,10 @@ func encodeWx(params openai.ParseCheckParam, replyMsg []byte) ([]byte, bool) {
 	// 使用AES加密回复消息
 
 	cryptor, err := wechataes.NewWechatCryptor(config.Wechat.AppID, config.Wechat.Token, config.Wechat.AESKey)
-	ret, err := cryptor.EncryptMsg(string(replyMsg), params.Timestamp, params.Nonce)
-
+	msg := string(replyMsg)
+	log.Printf("encodeWx source msg: \n%s", msg)
+	ret, err := cryptor.EncryptMsg(msg, params.Timestamp, params.Nonce)
+	log.Printf("encodeWx ret msg: \n%s", ret)
 	if err != nil {
 		// 处理加密错误
 		log.Printf("encodeWx EncryptMsg err %s", err)
