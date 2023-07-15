@@ -1,17 +1,20 @@
 package handler
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"openai/internal/config"
 	"openai/internal/service/fiter"
 	"openai/internal/service/openai"
 	"openai/internal/service/wechat"
 	"openai/internal/wechataes"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -148,6 +151,9 @@ func echo(w http.ResponseWriter, params openai.ParseCheckParam, data []byte) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
+	w.Header().Set("Timestamp", params.Timestamp)
+	w.Header().Set("Nonce", params.Nonce)
+
 	replyMsg := data // 替换为实际的回复消息
 
 	ret, done := encodeWx(params, replyMsg)
@@ -216,8 +222,19 @@ func encodeWx(params openai.ParseCheckParam, replyMsg []byte) ([]byte, bool) {
 	cryptor, err := wechataes.NewWechatCryptor(config.Wechat.AppID, config.Wechat.Token, config.Wechat.AESKey)
 	msg := string(replyMsg)
 	log.Printf("encodeWx source msg: \n%s", msg)
-	ret, err := cryptor.EncryptMsg(msg, params.Timestamp, params.Nonce)
-	log.Printf("encodeWx ret msg: \n%s", ret)
+	timeC := time.Now().Unix()
+
+	nonce, err := generateNonce(16)
+
+	if err != nil {
+		// generateNonce
+		log.Printf("encodeWx generateNonce err %s", err)
+		return nil, true
+	}
+	log.Printf("encodeWx Nonce : %s", nonce)
+	log.Printf("encodeWx TimeStamp  %d", timeC)
+	ret, err := cryptor.EncryptMsg(msg, strconv.FormatInt(timeC, 10), nonce)
+
 	if err != nil {
 		// 处理加密错误
 		log.Printf("encodeWx EncryptMsg err %s", err)
@@ -225,4 +242,13 @@ func encodeWx(params openai.ParseCheckParam, replyMsg []byte) ([]byte, bool) {
 	}
 
 	return []byte(ret), false
+}
+
+func generateNonce(length int) (string, error) {
+	bytes := make([]byte, length/2)
+	_, err := rand.Read(bytes)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }

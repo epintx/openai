@@ -92,7 +92,7 @@ func (cryptor *WechatCryptor) EncryptMsgContent(msg, timeStamp, nonce string) (s
 		timeStamp = fmt.Sprint(time.Now().Unix())
 	}
 
-	sign := SHA1(cryptor.token, timeStamp, nonce, encrypt)
+	sign := SHA1Resp(cryptor.token, timeStamp, nonce, encrypt)
 	return encrypt, sign, timeStamp, nonce, nil
 }
 

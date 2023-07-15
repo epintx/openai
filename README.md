@@ -15,6 +15,16 @@ go build -o openaiBin
 ``
 docker run -d -p 80:80 -v $PWD/openaiBin:/app/openaiBin -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
 ``
+###
+加密微信文档参考
+http://caibaojian.com/wxwiki/c12b653c4b8dc110b2929421d3f4d297f7c6608d.html#.E5.87.BD.E6.95.B0.E8.AF.B4.E6.98.8E
+结下，
+1. 返回时候的时间串和随机数需要新生成，不能用请求时候时间。
+2. 另外返回时候生成sha1签名时候，需要带上mgs。
+3. 对比收req解密时候不需要使用msg进行sha1验证签名
+4. 学会了修改源码，之前copy代码到项目下，包一样。
+5. 中间过程不造轮子。最关键是找到对接文档。就是收到时候的xml（这个可以直接打印）。返回的加密文。
+
 ### 一、介绍
 - 说明
   - 这是一个用于**公众号自动回复机器人**的项目。需要你有 OpenAI 账号、公众号、海外服务器或代理。
