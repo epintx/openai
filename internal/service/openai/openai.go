@@ -241,10 +241,10 @@ func postApi(msg string) (io.ReadCloser, error) {
 }
 
 func printLog(question string, answer *string, start time.Time) {
-	log.Printf(
-		"用时:%ds \nQ: %s \nA: %s\n\n",
-		int(time.Since(start).Seconds()),
-		question,
-		*answer,
-	)
+	//log.Printf(
+	//	"用时:%ds \nQ: %s \nA: %s\n\n",
+	//	int(time.Since(start).Seconds()),
+	//	question,
+	//	*answer,
+	//)
 }
