@@ -185,6 +185,9 @@ func decodeWX(r *http.Request, params openai.ParseCheckParam) ([]byte, bool) {
 		return nil, true
 	}
 
+	log.Printf("params: %s", params)
+	log.Printf("fromXML:\n%s", fromXML)
+
 	ret, err := cryptor.DecryptMsg(params.Signature, params.Timestamp, params.Nonce, fromXML)
 
 	if err != nil {
