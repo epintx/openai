@@ -44,6 +44,13 @@ type delta struct {
 	Content string `json:"content"`
 }
 
+type ParseCheckParam struct {
+	Signature string
+	Timestamp string
+	Nonce     string
+	Echostr   string
+}
+
 // type response struct {
 // 	ID    string `json:"id"`
 // 	Usage struct {

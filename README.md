@@ -10,6 +10,11 @@ GOOS=linux \
 GOARCH=amd64 \
 go build -o openaiBin
 ``
+### docker 运行修改后的openaiBin
+
+``
+docker run -d -p 80:80 -v $PWD/openaiBin:/app/openaiBin -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
+``
 ### 一、介绍
 - 说明
   - 这是一个用于**公众号自动回复机器人**的项目。需要你有 OpenAI 账号、公众号、海外服务器或代理。

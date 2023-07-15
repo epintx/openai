@@ -1,13 +1,11 @@
 package handler
 
 import (
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"github.com/CharLemAznable/wechataes"
+	_ "github.com/CharLemAznable/wechataes"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -49,8 +47,8 @@ type RequestMessage struct {
 // https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Passive_user_reply_message.html
 // 微信服务器在五秒内收不到响应会断掉连接，并且重新发起请求，总共重试三次
 func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
-
-	encryptedMsg, done := decodeWX(r)
+	params := getRequestCheckParams(r)
+	encryptedMsg, done := decodeWX(r, params)
 	if done {
 		return
 	}
@@ -58,7 +56,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	msg := wechat.NewMsg(encryptedMsg)
 
 	if msg == nil {
-		echo(w, []byte("xml格式公众号消息接口，请勿手动调用"))
+		echo(w, params, []byte("xml格式公众号消息接口，请勿手动调用"))
 		return
 	}
 
@@ -67,20 +65,20 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	// 未写的类型
 	default:
 		log.Printf("未实现的消息类型%s\n", msg.MsgType)
-		echo(w, success)
+		echo(w, params, success)
 	case "event":
 		switch msg.Event {
 		default:
 			log.Printf("未实现的事件%s\n", msg.Event)
-			echo(w, success)
+			echo(w, params, success)
 		case "subscribe":
 			log.Println("新增关注:", msg.FromUserName)
 			b := msg.GenerateEchoData(config.Wechat.SubscribeMsg)
-			echo(w, b)
+			echo(w, params, b)
 			return
 		case "unsubscribe":
 			log.Println("取消关注:", msg.FromUserName)
-			echo(w, success)
+			echo(w, params, success)
 			return
 		}
 	// https://developers.weixin.qq.com/doc/offiaccount/Message_Management/Receiving_standard_messages.html
@@ -93,7 +91,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 	// 敏感词检测
 	if !fiter.Check(msg.Content) {
 		warnWx := msg.GenerateEchoData(warn)
-		echo(w, warnWx)
+		echo(w, params, warnWx)
 		return
 	}
 
@@ -113,7 +111,7 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 			result = warn
 		}
 		bs := msg.GenerateEchoData(result)
-		echo(w, bs)
+		echo(w, params, bs)
 		requests.Delete(msg.MsgId)
 	// 超时不要回答，会重试的
 	case <-time.After(time.Second * 5):
@@ -147,13 +145,13 @@ func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
 	w.Write(data)
 }
 
-func echo(w http.ResponseWriter, data []byte) {
+func echo(w http.ResponseWriter, params openai.ParseCheckParam, data []byte) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
 	replyMsg := data // 替换为实际的回复消息
 
-	ret, done := encodeWx(replyMsg)
+	ret, done := encodeWx(params, replyMsg)
 	if done {
 		return
 	}
@@ -161,7 +159,8 @@ func echo(w http.ResponseWriter, data []byte) {
 
 }
 
-func decodeWX(r *http.Request) ([]byte, bool) {
+func decodeWX(r *http.Request, params openai.ParseCheckParam) ([]byte, bool) {
+
 	// 读取请求体数据
 	requestBody, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -171,104 +170,55 @@ func decodeWX(r *http.Request) ([]byte, bool) {
 	}
 
 	// 解析XML数据
+	format := "<xml><ToUserName><![CDATA[toUser]]></ToUserName><Encrypt><![CDATA[%s]]></Encrypt></xml>"
 	var reqMsg RequestMessage
-	if err := xml.Unmarshal(requestBody, &reqMsg); err != nil {
-		// 处理解析错误
-		log.Printf("decodeWX 处理解析错误 %s", err)
-		return nil, true
-	}
+	_ = xml.Unmarshal(requestBody, &reqMsg)
 
 	encryptedMsg := reqMsg.EncryptedMsg
+	fromXML := fmt.Sprintf(format, encryptedMsg)
 
-	// 根据自己的实际情况获取AES密钥
-	aesKey := GetAESKeyFromConfig()
-
-	// 解密加密内容
-
-	// 解密消息
-	decodeString, err := base64.StdEncoding.DecodeString(encryptedMsg)
-	decryptedData, _ := aesDecryptCbc(decodeString, aesKey)
-	fmt.Println("Decrypted data:", decryptedData)
+	cryptor, err := wechataes.NewWechatCryptor(config.Wechat.AppID, config.Wechat.Token, config.Wechat.AESKey)
 
 	if err != nil {
 		// 处理解密错误
-		log.Printf("decodeWX AESDecrypt err %s", err)
+		log.Printf("decodeWX NewWechatCryptor err %s", err)
 		return nil, true
 	}
-	return decryptedData, false
+
+	ret, err := cryptor.DecryptMsg(params.Signature, params.Timestamp, params.Nonce, fromXML)
+
+	if err != nil {
+		// 处理解密错误
+		log.Printf("decodeWX DecryptMsg err %s", err)
+		return nil, true
+	}
+
+	return []byte(ret), false
 }
 
-func encodeWx(replyMsg []byte) ([]byte, bool) {
+func getRequestCheckParams(r *http.Request) openai.ParseCheckParam {
+	query := r.URL.Query()
+
+	param := openai.ParseCheckParam{
+		Signature: query.Get("signature"),
+		Timestamp: query.Get("timestamp"),
+		Nonce:     query.Get("nonce"),
+		Echostr:   query.Get("echostr"),
+	}
+	return param
+}
+
+func encodeWx(params openai.ParseCheckParam, replyMsg []byte) ([]byte, bool) {
 	// 使用AES加密回复消息
-	encryptedReplyMsg, err := aesEncryptCbc(replyMsg, GetAESKeyFromConfig())
+
+	cryptor, err := wechataes.NewWechatCryptor(config.Wechat.AppID, config.Wechat.Token, config.Wechat.AESKey)
+	ret, err := cryptor.EncryptMsg(string(replyMsg), params.Timestamp, params.Nonce)
+
 	if err != nil {
 		// 处理加密错误
-		log.Printf("encodeWx AESEncrypt err")
+		log.Printf("encodeWx EncryptMsg err %s", err)
 		return nil, true
 	}
 
-	// 构建回复XML数据
-	responseXML := fmt.Sprintf(`<xml><Encrypt><![CDATA[%s]]></Encrypt></xml>`, base64.StdEncoding.EncodeToString(encryptedReplyMsg))
-
-	// 发送回复消息给微信公众号服务器
-	ret := []byte(responseXML)
-	return ret, false
-}
-
-func GetAESKeyFromConfig() []byte {
-	// 从配置文件读取AES密钥
-	// ...
-
-	// 对于AES密钥，通常以字节数组形式表示
-	return []byte(config.Wechat.AESKey)
-}
-
-// 使用 CBC 模式进行解密
-func aesDecryptCbc(ciphertext, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	iv := make([]byte, aes.BlockSize)
-	mode := cipher.NewCBCDecrypter(block, iv)
-
-	plaintext := make([]byte, len(ciphertext))
-	mode.CryptBlocks(plaintext, ciphertext)
-
-	// 去除填充
-	padding := plaintext[len(plaintext)-1]
-	if padding < 1 || padding > aes.BlockSize {
-		return nil, fmt.Errorf("Invalid padding")
-	}
-	plaintext = plaintext[:len(plaintext)-int(padding)]
-
-	return plaintext, nil
-}
-
-// 使用 CBC 模式进行加密
-func aesEncryptCbc(plaintext, key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	blockSize := block.BlockSize()
-	plaintext = pkcs7Padding(plaintext, blockSize)
-
-	iv := make([]byte, blockSize)
-
-	mode := cipher.NewCBCEncrypter(block, iv)
-
-	ciphertext := make([]byte, len(plaintext))
-	mode.CryptBlocks(ciphertext, plaintext)
-
-	return ciphertext, nil
-}
-
-// PKCS7 填充
-func pkcs7Padding(data []byte, blockSize int) []byte {
-	padding := blockSize - (len(data) % blockSize)
-	padText := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(data, padText...)
+	return []byte(ret), false
 }
