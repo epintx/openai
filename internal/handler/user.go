@@ -62,6 +62,8 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("ReceiveMsg user: %s", msg.FromUserName)
+
 	// 非文本不回复(返回success表示不回复)
 	switch msg.MsgType {
 	// 未写的类型
@@ -151,9 +153,6 @@ func echo(w http.ResponseWriter, params openai.ParseCheckParam, data []byte) {
 	w.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 
-	w.Header().Set("Timestamp", params.Timestamp)
-	w.Header().Set("Nonce", params.Nonce)
-
 	replyMsg := data // 替换为实际的回复消息
 
 	ret, done := encodeWx(params, replyMsg)
@@ -190,8 +189,8 @@ func decodeWX(r *http.Request, params openai.ParseCheckParam) ([]byte, bool) {
 		return nil, true
 	}
 
-	log.Printf("params: %s", params)
-	log.Printf("fromXML:\n%s", fromXML)
+	//log.Printf("params: %s", params)
+	//log.Printf("fromXML:\n%s", fromXML)
 
 	ret, err := cryptor.DecryptMsg(params.Signature, params.Timestamp, params.Nonce, fromXML)
 
@@ -221,7 +220,7 @@ func encodeWx(params openai.ParseCheckParam, replyMsg []byte) ([]byte, bool) {
 
 	cryptor, err := wechataes.NewWechatCryptor(config.Wechat.AppID, config.Wechat.Token, config.Wechat.AESKey)
 	msg := string(replyMsg)
-	log.Printf("encodeWx source msg: \n%s", msg)
+	//log.Printf("encodeWx source msg: \n%s", msg)
 	timeC := time.Now().Unix()
 
 	nonce, err := generateNonce(16)
@@ -231,8 +230,8 @@ func encodeWx(params openai.ParseCheckParam, replyMsg []byte) ([]byte, bool) {
 		log.Printf("encodeWx generateNonce err %s", err)
 		return nil, true
 	}
-	log.Printf("encodeWx Nonce : %s", nonce)
-	log.Printf("encodeWx TimeStamp  %d", timeC)
+	//log.Printf("encodeWx Nonce : %s", nonce)
+	//log.Printf("encodeWx TimeStamp  %d", timeC)
 	ret, err := cryptor.EncryptMsg(msg, strconv.FormatInt(timeC, 10), nonce)
 
 	if err != nil {

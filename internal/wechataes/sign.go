@@ -3,7 +3,6 @@ package wechataes
 import (
 	"crypto/sha1"
 	"encoding/hex"
-	"log"
 	"sort"
 	"strings"
 )
@@ -19,7 +18,7 @@ func SHA1(token, timestamp, nonce, encrypt string) string {
 	sumHex := make([]byte, hex.EncodedLen(len(sum)))
 	hex.Encode(sumHex, sum)
 	ret := string(sumHex)
-	log.Printf("SHA1:\n%s", ret)
+	//log.Printf("SHA1 Req: %s", ret)
 
 	return ret
 }
@@ -35,7 +34,7 @@ func SHA1Resp(token, timestamp, nonce, encrypt string) string {
 	sumHex := make([]byte, hex.EncodedLen(len(sum)))
 	hex.Encode(sumHex, sum)
 	ret := string(sumHex)
-	log.Printf("SHA1:\n%s", ret)
+	//log.Printf("SHA1Resp: %s", ret)
 
 	return ret
 }
