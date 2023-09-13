@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -124,19 +125,36 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 }
 
 func Test(w http.ResponseWriter, r *http.Request) {
-	msg := r.URL.Query().Get("msg")
+	query := r.URL.Query()
+	msg := query.Get("msg")
+	respType := query.Get("type")
 	if !fiter.Check(msg) {
 		echoJson(w, "", warn)
 		return
 	}
 	cg := testChatGpt(msg)
 	gt := translateEnToZh(msg)
-	data, _ := json.Marshal(map[string]interface{}{
+
+	v := map[string]interface{}{
 		"chat gpt":         cg,
 		"google translate": gt,
-	})
+	}
 
-	echoMsg(w, string(data), "")
+	if respType == "json" {
+		//json
+		data, _ := json.Marshal(v)
+		echoMsg(w, string(data), "")
+	} else {
+		//html
+		tmpl, err := template.ParseFiles("template.html")
+
+		err = tmpl.Execute(w, v)
+
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
+
 }
 
 func translateEnToZh(msg string) string {

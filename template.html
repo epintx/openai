@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Map to HTML</title>
+</head>
+<body>
+{{range $key, $value := .}}
+<p><strong>{{$key}}:</strong> {{$value}}</p>
+{{end}}
+</body>
+</html>
