@@ -136,8 +136,8 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	gt := translateEnToZh(msg)
 
 	v := map[string]interface{}{
-		"chat gpt":         cg,
-		"google translate": gt,
+		"chat_gpt":         cg,
+		"google_translate": gt,
 	}
 
 	if respType == "json" {
