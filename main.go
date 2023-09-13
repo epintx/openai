@@ -22,7 +22,7 @@ func main() {
 	// 用于公众号自动验证
 	r.GET("/wx", handler.WechatCheck)
 	// 用于测试 curl "http://127.0.0.1:$PORT/test"
-	r.GET("/test.html", handler.Test)
+	r.GET("/test", handler.Test)
 	//r.GET("/", handler.Test)
 
 	// 设置日志
