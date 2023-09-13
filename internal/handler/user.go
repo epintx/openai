@@ -147,7 +147,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoMsg(w, string(data), "")
 	} else {
 
-		filename := "template.html"
+		filename := "/app/template.html"
 
 		// 使用 os.Stat() 检查文件是否存在
 		_, err := os.Stat(filename)
