@@ -168,7 +168,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Fatal(err)
 		}
-		echoHtml(w, buffer.String(), "")
+		echoMsg(w, buffer.String(), "")
 	}
 
 }
@@ -247,16 +247,6 @@ func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
 		"message": message,
 	})
 	w.Write(data)
-}
-
-func echoHtml(w http.ResponseWriter, replyMsg string, errMsg string) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	var message = replyMsg
-	if errMsg != "" {
-		message = errMsg
-	}
-	w.Write([]byte(message))
 }
 
 func echoMsg(w http.ResponseWriter, replyMsg string, errMsg string) {
