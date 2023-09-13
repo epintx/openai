@@ -135,7 +135,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	cg := testChatGpt(msg)
 	gt := translateEnToZh(msg)
 
-	v := map[string]interface{}{
+	v := map[string]string{
 		"chat_gpt":         cg,
 		"google_translate": gt,
 	}
