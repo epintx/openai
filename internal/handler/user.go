@@ -129,11 +129,11 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
-	s := testChatGpt(msg)
-	g := translateEnToZh(msg)
+	cg := testChatGpt(msg)
+	gt := translateEnToZh(msg)
 	data, _ := json.Marshal(map[string]interface{}{
-		"chat gpt":         g,
-		"google translate": s,
+		"chat gpt":         cg,
+		"google translate": gt,
 	})
 
 	echoMsg(w, string(data), "")
@@ -144,7 +144,7 @@ func translateEnToZh(msg string) string {
 	url := "https://translate.google.com/translate_a/single"
 
 	// 构建POST请求体
-	payload := strings.NewReader("client=gtx&sl=en&tl=zh-CN&dt=t&q=Hello")
+	payload := strings.NewReader("client=gtx&sl=en&tl=zh-CN&dt=t&q=" + msg)
 
 	// 发送POST请求
 	response, err := http.Post(url, "application/x-www-form-urlencoded", payload)
