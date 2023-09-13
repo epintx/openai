@@ -131,15 +131,16 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	}
 	s := openai.Query("0", msg, time.Second*5)
 
-	var count int
-	for {
-		if count > 10 {
-			break
-		}
-		if strings.Contains(s, "【回复“继续”以滚动查看】") {
-			s = s + openai.Query("0", "继续", time.Second*5)
-		}
+	for i := 0; i < 5; i++ {
 
+		suffix := "【回复“继续”以滚动查看】"
+		if strings.Contains(s, suffix) {
+
+			newr := openai.Query("0", "继续", time.Second*5)
+
+			s = strings.Replace(s, suffix, newr, 1)
+
+		}
 	}
 
 	echoJson(w, s, "")
