@@ -250,7 +250,7 @@ func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
 }
 
 func echoHtml(w http.ResponseWriter, replyMsg string, errMsg string) {
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html")
 	w.WriteHeader(http.StatusOK)
 	var message = replyMsg
 	if errMsg != "" {
