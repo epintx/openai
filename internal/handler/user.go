@@ -147,12 +147,14 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	} else {
 		//html
 		tmpl, err := template.ParseFiles("template.html")
-
-		err = tmpl.Execute(w, v)
+		// 创建一个缓冲区
+		buffer := &strings.Builder{}
+		err = tmpl.Execute(buffer, v)
 
 		if err != nil {
 			log.Fatal(err)
 		}
+		echoMsg(w, buffer.String(), "")
 	}
 
 }
