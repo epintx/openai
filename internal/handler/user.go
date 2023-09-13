@@ -143,7 +143,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	echoJson(w, s, "")
+	echoMsg(w, s, "")
 }
 
 func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
@@ -161,6 +161,16 @@ func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
 		"message": message,
 	})
 	w.Write(data)
+}
+
+func echoMsg(w http.ResponseWriter, replyMsg string, errMsg string) {
+	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	var message = replyMsg
+	if errMsg != "" {
+		message = errMsg
+	}
+	w.Write([]byte(message))
 }
 
 func echo(w http.ResponseWriter, params openai.ParseCheckParam, data []byte) {
