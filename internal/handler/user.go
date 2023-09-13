@@ -15,6 +15,7 @@ import (
 	"openai/internal/service/openai"
 	"openai/internal/service/wechat"
 	"openai/internal/wechataes"
+	"os"
 	"strconv"
 	"strings"
 	"sync"
@@ -145,8 +146,21 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		data, _ := json.Marshal(v)
 		echoMsg(w, string(data), "")
 	} else {
+
+		filename := "template.html"
+
+		// 使用 os.Stat() 检查文件是否存在
+		_, err := os.Stat(filename)
+		if os.IsNotExist(err) {
+			fmt.Printf("文件 %s 不存在\n", filename)
+		} else if err == nil {
+			fmt.Printf("文件 %s 存在\n", filename)
+		} else {
+			fmt.Println("发生错误：", err)
+		}
+
 		//html
-		tmpl, err := template.ParseFiles("template.html")
+		tmpl, err := template.ParseFiles(filename)
 		// 创建一个缓冲区
 		buffer := &strings.Builder{}
 		err = tmpl.Execute(buffer, v)
