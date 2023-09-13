@@ -1,4 +1,5 @@
 #!/bin/bash
+git fetch
 git pull --rebase
 docker stop openai
 docker rm openai
