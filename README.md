@@ -10,10 +10,19 @@ GOOS=linux \
 GOARCH=amd64 \
 go build -o openaiBin
 ``
+
 ### docker 运行修改后的openaiBin
 
 ``
-docker run -d -p 80:80 -v $PWD/openaiBin:/app/openaiBin -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml tomatocuke/openai
+docker run -d -p 80:80 -v $PWD/openaiBin:/app/openaiBin -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml --name openai tomatocuke/openai
+``
+
+``
+#!/bin/bash
+docker stop openai
+docker rm openai
+docker run -d -p 80:80 -v $PWD/openaiBin:/app/openaiBin -v $PWD/log:/app/log -v $PWD/config.yaml:/app/config.yaml --name openai tomatocuke/openai
+
 ``
 ###
 加密微信文档参考
