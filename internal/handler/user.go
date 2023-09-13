@@ -129,6 +129,59 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
+	s := testChatGpt(msg)
+	g := translateEnToZh(msg)
+	data, _ := json.Marshal(map[string]interface{}{
+		"chat gpt":         g,
+		"google translate": s,
+	})
+
+	echoMsg(w, string(data), "")
+}
+
+func translateEnToZh(msg string) string {
+	// 构建POST请求URL
+	url := "https://translate.google.com/translate_a/single"
+
+	// 构建POST请求体
+	payload := strings.NewReader("client=gtx&sl=en&tl=zh-CN&dt=t&q=Hello")
+
+	// 发送POST请求
+	response, err := http.Post(url, "application/x-www-form-urlencoded", payload)
+	if err != nil {
+		fmt.Println("请求失败:", err)
+		return ""
+	}
+	defer response.Body.Close()
+
+	// 读取响应内容
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		fmt.Println("请求失败:", err)
+		return ""
+	}
+
+	// 输出响应结果
+
+	str := string(body)
+
+	startIndex := strings.Index(str, "\"")
+	if startIndex == -1 {
+		fmt.Println("找不到双引号")
+		return ""
+	}
+
+	endIndex := strings.Index(str[startIndex+1:], "\"") + startIndex + 1
+	if endIndex == -1 {
+		fmt.Println("找不到闭合的双引号")
+		return ""
+	}
+
+	content := str[startIndex+1 : endIndex]
+	return content
+}
+
+func testChatGpt(msg string) string {
 	s := openai.Query("0", msg, time.Second*5)
 
 	for i := 0; i < 5; i++ {
@@ -142,8 +195,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 
 		}
 	}
-
-	echoMsg(w, s, "")
+	return s
 }
 
 func echoJson(w http.ResponseWriter, replyMsg string, errMsg string) {
