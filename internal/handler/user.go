@@ -15,6 +15,7 @@ import (
 	"openai/internal/service/wechat"
 	"openai/internal/wechataes"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 )
@@ -129,6 +130,18 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s := openai.Query("0", msg, time.Second*5)
+
+	var count int
+	for {
+		if count > 10 {
+			break
+		}
+		if strings.Contains(s, "【回复“继续”以滚动查看】") {
+			s = s + openai.Query("0", "继续", time.Second*5)
+		}
+
+	}
+
 	echoJson(w, s, "")
 }
 
