@@ -128,6 +128,10 @@ func ReceiveMsg(w http.ResponseWriter, r *http.Request) {
 func Test(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	msg := query.Get("msg")
+	word := query.Get("word")
+	if word != "" {
+		msg = "世界记忆大师什么什么物体作为词根" + word + "的记忆编码？"
+	}
 	respType := query.Get("type")
 	if !fiter.Check(msg) {
 		echoJson(w, "", warn)
