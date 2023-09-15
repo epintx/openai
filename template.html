@@ -17,6 +17,8 @@
 <h1>google_translate</h1>
 <h3>{{.google_translate}}</h3>
 
+<a href="">google翻译</a>
+
 <input type="text" id="wordInput" placeholder="{{.word}}">
 <button onclick="query()">查询</button>
 
@@ -47,8 +49,8 @@
                     phoneticSpan.textContent = "音标: " + phoneticSpelling;
 
                     var audioLink = document.createElement("a");
-                    audioLink.href = "http://tts.baidu.com/text2audio?tex=" + encodeURIComponent(word) + "&lan=en&cuid=baidu_speech_demo&ctp=1&pdt=311&vol=9&rate=32&per=4&spd=5&tok=24.4ff3d18eae3e3f0e7f93c0d5e63b4a4f.2592000.1657902732.282335-23653688";
-                    audioLink.textContent = "发音";
+                    audioLink.href = "https://translate.google.com/?sl=en&tl=zh-CN&text=" + encodeURIComponent(word) + "&op=translate";
+                    audioLink.textContent = "go to google tran";
                     audioLink.target = "_blank";
 
                     resultDiv.appendChild(phoneticSpan);
