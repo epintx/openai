@@ -144,13 +144,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
-
-	br := "<br>"
-	if respType == "json" {
-		br = "\n"
-	}
-
-	cg := testChatGpt(msg, pos, br)
+	cg := testChatGpt(msg, pos)
 	gt := translateEnToZh(msg)
 
 	v := map[string]string{
@@ -159,8 +153,8 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		"chat_gpt":         cg,
 		"google_translate": gt,
 	}
-	if respType == "json" {
 
+	if respType == "json" {
 		//json
 		data, _ := json.Marshal(v)
 		echoMsg(w, string(data), "")
@@ -234,7 +228,7 @@ func translateEnToZh(msg string) string {
 	return content
 }
 
-func testChatGpt(msg string, pos int, br string) string {
+func testChatGpt(msg string, pos int) string {
 
 	uid := pos % 10
 
@@ -246,7 +240,7 @@ func testChatGpt(msg string, pos int, br string) string {
 
 			newr := openai.Query(strconv.Itoa(uid), "继续", time.Second*5)
 
-			s = strings.Replace(s, suffix, "<br>"+newr, 1)
+			s = strings.Replace(s, suffix, newr, 1)
 
 		}
 	}
