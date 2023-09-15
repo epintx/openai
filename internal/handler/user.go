@@ -149,6 +149,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 
 	v := map[string]string{
 		"title":            msg,
+		"word":             word,
 		"chat_gpt":         cg,
 		"google_translate": gt,
 	}

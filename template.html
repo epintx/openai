@@ -2,11 +2,61 @@
 <html>
 <head>
     <title>{{.title}}</title>
+    <script>
+        window.onload = function() {
+            // 在这里编写要执行的 JavaScript 代码
+            query();
+        };
+    </script>
 </head>
 <body>
 <h1>chat_gpt</h1>
 <h3>{{.chat_gpt}}</h3>
 <h1>google_translate</h1>
 <h3>{{.google_translate}}</h3>
+
+<input type="text" id="wordInput" placeholder="{{.word}}">
+<button onclick="query()">查询</button>
+
+<div id="resultDiv"></div>
+
+<script>
+    function query() {
+        var word = document.getElementById("wordInput").value;
+        var url = "https://api.dictionary.com/api/v3/references/learners/json/" + word;
+
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                var resultDiv = document.getElementById("resultDiv");
+                resultDiv.innerHTML = "";
+
+                if (data.length > 0 && data[0].hwi && data[0].hwi.prs) {
+                    var phoneticSpelling = data[0].hwi.prs[0].mw;
+                    var audioUrl = data[0].hwi.prs[0].sound.audio;
+
+                    var phoneticSpan = document.createElement("span");
+                    phoneticSpan.textContent = "音标: " + phoneticSpelling;
+
+                    var audioLink = document.createElement("a");
+                    audioLink.href = "https://media.merriam-webster.com/audio/prons/en/us/mp3/" + audioUrl.substr(0, 1) + "/" + audioUrl;
+                    audioLink.textContent = "发音";
+                    audioLink.target = "_blank";
+
+                    resultDiv.appendChild(phoneticSpan);
+                    resultDiv.appendChild(document.createElement("br"));
+                    resultDiv.appendChild(audioLink);
+                } else {
+                    resultDiv.textContent = "找不到该单词的音标和发音";
+                }
+            })
+            .catch(error => {
+                console.log("请求失败:", error);
+                var resultDiv = document.getElementById("resultDiv");
+                resultDiv.textContent = "查询失败";
+            });
+    }
+</script>
+
 </body>
 </html>
