@@ -2,6 +2,7 @@
 <html>
 <head>
     <title>{{.title}}</title>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         window.onload = function() {
             // 在这里编写要执行的 JavaScript 代码
@@ -23,23 +24,29 @@
 <script>
     function query() {
         var word = document.getElementById("wordInput").value;
-        var url = "https://api.dictionary.com/api/v3/references/learners/json/" + word;
+        var appid = "20230916001818938"; // 替换为你的百度翻译 APP ID
+        var secretKey = "bgD6MX56yLmpf_gkFGds"; // 替换为你的百度翻译 Secret Key
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => {
+        var salt = (new Date).getTime();
+        var sign = MD5(appid + word + salt + secretKey);
+        var url = "https://fanyi-api.baidu.com/api/trans/vip/translate?q=" + encodeURIComponent(word) + "&from=en&to=zh&appid=" + appid + "&salt=" + salt + "&sign=" + sign;
+
+        $.ajax({
+            url: url,
+            type: "get",
+            dataType: "jsonp",
+            success: function(data) {
                 var resultDiv = document.getElementById("resultDiv");
                 resultDiv.innerHTML = "";
 
-                if (data.length > 0 && data[0].hwi && data[0].hwi.prs) {
-                    var phoneticSpelling = data[0].hwi.prs[0].mw;
-                    var audioUrl = data[0].hwi.prs[0].sound.audio;
+                if (data.trans_result && data.trans_result.length > 0) {
+                    var phoneticSpelling = data.trans_result[0].dst;
 
                     var phoneticSpan = document.createElement("span");
                     phoneticSpan.textContent = "音标: " + phoneticSpelling;
 
                     var audioLink = document.createElement("a");
-                    audioLink.href = "https://media.merriam-webster.com/audio/prons/en/us/mp3/" + audioUrl.substr(0, 1) + "/" + audioUrl;
+                    audioLink.href = "http://tts.baidu.com/text2audio?tex=" + encodeURIComponent(word) + "&lan=en&cuid=baidu_speech_demo&ctp=1&pdt=311&vol=9&rate=32&per=4&spd=5&tok=24.4ff3d18eae3e3f0e7f93c0d5e63b4a4f.2592000.1657902732.282335-23653688";
                     audioLink.textContent = "发音";
                     audioLink.target = "_blank";
 
@@ -49,12 +56,13 @@
                 } else {
                     resultDiv.textContent = "找不到该单词的音标和发音";
                 }
-            })
-            .catch(error => {
+            },
+            error: function(xhr, status, error) {
                 console.log("请求失败:", error);
                 var resultDiv = document.getElementById("resultDiv");
                 resultDiv.textContent = "查询失败";
-            });
+            }
+        });
     }
 </script>
 
