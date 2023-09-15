@@ -228,10 +228,10 @@ func translateEnToZh(msg string) string {
 }
 
 func testChatGpt(msg string, pos int) string {
-	s := openai.Query("0", msg, time.Second*5)
 
 	uid := pos % 10
 
+	s := openai.Query(strconv.Itoa(uid), msg, time.Second*5)
 	for i := 0; i < 5; i++ {
 
 		suffix := "【回复“继续”以滚动查看】"
