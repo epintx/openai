@@ -129,6 +129,13 @@ func Test(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	msg := query.Get("msg")
 	word := query.Get("word")
+	posParam := query.Get("pos")
+	pos, err := strconv.Atoi(posParam)
+
+	if err == nil {
+
+	}
+
 	if word != "" {
 		msg = "世界记忆大师什么什么物体作为词根" + word + "的记忆编码？"
 	}
@@ -137,7 +144,7 @@ func Test(w http.ResponseWriter, r *http.Request) {
 		echoJson(w, "", warn)
 		return
 	}
-	cg := testChatGpt(msg)
+	cg := testChatGpt(msg, pos)
 	gt := translateEnToZh(msg)
 
 	v := map[string]string{
@@ -220,15 +227,17 @@ func translateEnToZh(msg string) string {
 	return content
 }
 
-func testChatGpt(msg string) string {
+func testChatGpt(msg string, pos int) string {
 	s := openai.Query("0", msg, time.Second*5)
+
+	uid := pos % 10
 
 	for i := 0; i < 5; i++ {
 
 		suffix := "【回复“继续”以滚动查看】"
 		if strings.Contains(s, suffix) {
 
-			newr := openai.Query("0", "继续", time.Second*5)
+			newr := openai.Query(strconv.Itoa(uid), "继续", time.Second*5)
 
 			s = strings.Replace(s, suffix, newr, 1)
 
